@@ -17,14 +17,25 @@ import random
 import time
 logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
+modbus_opeations = {
+    1: 'Read Coil', 
+    2: 'Read Discrete Input', 
+    3: 'Read Holding Registers',
+    4: 'Read Input Registers', 
+    5: 'Write Single Coil', 
+    6: 'Write Single Holding Register', 
+    15: 'Write Multiple Coils', 
+    16: 'Write Multiple Holding Registers'
+}
+
 class LoggingDataBlock(ModbusSequentialDataBlock):
-    def setValues(self, address, values):
-        logging.info(f"Write Request: Address={address}, Values={values}")
-        super().setValues(address, values)
+    def setValues(self, address, value):
+        logging.info(f"Write Request: Address={address}, Values={value}")
+        super().setValues(address, value)
 
     def getValues(self, address, count=1):
         values = super().getValues(address, count)
-        logging.info(f"Read Request: Address={address}, Count={count}, Values={values}")
+        logging.info(f"value = {values[0]} Operation = {modbus_opeations[values[0]]}")
         return values
 store = ModbusSlaveContext(
     di=LoggingDataBlock(0, [0] * 100),  # Discrete Inputs
@@ -56,8 +67,9 @@ def run_client():
     print(f"Connected to Modbus TCP Server at {SERVER_IP}:{PORT}")
     try:
         while True:
-            register_address = random.randint(0, 10)
-            value = random.randint(0, 10)
+            register_address = random.randint(0,10)
+            ops = list(modbus_opeations.keys())
+            value = random.choice(ops)
             response = client.write_register(register_address, value)
             if response.isError():
                 print(f"Failed to write to register {register_address}")
